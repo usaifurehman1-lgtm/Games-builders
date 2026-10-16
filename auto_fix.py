@@ -4,143 +4,151 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
+from datetime import datetime
 
 ROOT = Path.home() / "Project100"
-ANDROID = ROOT / "android"
-WWW = ROOT / "www"
-REPORT = ROOT / "auto_fix_report.txt"
-
-log = []
-
-def say(message):
-    print(message)
-    log.append(message)
-
-def run(command, cwd=ROOT):
-    say("\n$ " + " ".join(map(str, command)))
-    try:
-        result = subprocess.run(
-            command,
-            cwd=str(cwd),
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            timeout=1800
-        )
-        output = result.stdout or ""
-        print(output[-7000:])
-        log.append(output[-7000:])
-        return result.returncode
-    except Exception as error:
-        say("ERROR: " + str(error))
-        return 1
-
-def check_file(path):
-    return path.exists() and path.is_file()
-
 os.chdir(ROOT)
-say("=== PROJECT100 AUTO CHECK AND BUILD ===")
-say("Project: " + str(ROOT))
 
-# 1. Check essential files
-required = [
-    ROOT / "package.json",
-    ROOT / "capacitor.config.json",
-    WWW / "index.html",
-    ANDROID / "gradlew",
-    ANDROID / "app/build.gradle",
-    ANDROID / "app/src/main/AndroidManifest.xml",
-]
+def run(args, timeout=None):
+    print("\n>>>", " ".join(map(str, args)), flush=True)
+    try:
+        return subprocess.run(
+            args, cwd=ROOT, text=True,
+            timeout=timeout
+        ).returncode
+    except subprocess.TimeoutExpired:
+        print("Command timed out.")
+        return 124
+    except FileNotFoundError:
+        print("Command not found:", args[0])
+        return 127
 
-missing = [str(p.relative_to(ROOT)) for p in required if not check_file(p)]
-if missing:
-    say("MISSING REQUIRED FILES:")
-    for item in missing:
-        say(" - " + item)
-    say("Cannot safely build until required files are restored.")
-    REPORT.write_text("\n".join(log))
+def backup(path):
+    path = Path(path)
+    if path.exists():
+        target = path.with_name(
+            path.name + ".backup-" +
+            datetime.now().strftime("%Y%m%d-%H%M%S")
+        )
+        shutil.copy2(path, target)
+        print("Backup:", target)
+
+def stop(message):
+    print("\nSTOP:", message)
     sys.exit(1)
 
-# 2. Confirm project identity
-try:
-    package = json.loads((ROOT / "package.json").read_text())
-    say("Package name: " + str(package.get("name", "unknown")))
-except Exception as error:
-    say("Could not parse package.json: " + str(error))
+print("=" * 55)
+print("PROJECT100 AUTO CHECK AND REPAIR")
+print("=" * 55)
 
-# 3. Check all original plugin source files without overwriting them
-plugin_dir = ROOT / "plugin-source"
-plugin_files = [
-    "admob longin",
-    "facebook.longin",
-    "start_io_longin",
-    "unity.longin",
+# 1. Check important files
+required = [
+    "package.json",
+    "capacitor.config.json",
+    "www/index.html",
+    "android/app/build.gradle",
+    "android/gradlew",
+    "android/app/src/main/java/com/project100/app/MainActivity.java",
+    "android/app/src/main/java/com/project100/app/FacebookRewardedPlugin.java",
+    "android/app/src/main/java/com/project100/app/UnityAdsPlugin.java",
+    ".github/workflows/android-apk.yml",
 ]
-for name in plugin_files:
-    path = plugin_dir / name
-    if path.exists():
-        say("SOURCE OK: " + name)
-    else:
-        say("SOURCE MISSING: " + name)
+missing = [x for x in required if not (ROOT / x).is_file()]
+if missing:
+    print("Missing files:")
+    for x in missing:
+        print(" -", x)
+    stop("Missing files cannot safely be recreated without their contents.")
 
-# 4. Check Android Java files
-java_dir = ANDROID / "app/src/main/java/com/project100/app"
-java_dir.mkdir(parents=True, exist_ok=True)
+# 2. Validate JSON files
+for name in ["package.json", "capacitor.config.json"]:
+    try:
+        json.loads((ROOT / name).read_text())
+        print("JSON OK:", name)
+    except Exception as e:
+        stop(f"{name} is invalid: {e}")
 
+# 3. Check tools
+for tool in ["node", "npm", "git", "java"]:
+    print(tool + ":", shutil.which(tool) or "NOT FOUND")
+
+if not shutil.which("npm"):
+    stop("Install Node.js/npm in Termux first.")
+
+# 4. Back up project config and custom plugins
 for name in [
-    "MainActivity.java",
-    "FacebookRewardedPlugin.java",
-    "UnityAdsPlugin.java",
-    "StartIoAdsPlugin.java",
+    "android/app/build.gradle",
+    "android/app/src/main/java/com/project100/app/MainActivity.java",
+    "android/app/src/main/java/com/project100/app/FacebookRewardedPlugin.java",
+    "android/app/src/main/java/com/project100/app/UnityAdsPlugin.java",
 ]:
-    path = java_dir / name
-    say(("JAVA OK: " if path.exists() else "JAVA MISSING: ") + name)
+    backup(ROOT / name)
 
-# 5. Check Gradle, Java, and Android SDK
-for tool in ["java", "node", "npm", "git"]:
-    say(f"{tool}: {shutil.which(tool) or 'NOT FOUND'}")
+# 5. Fix missing SDK dependencies if absent
+gradle = ROOT / "android/app/build.gradle"
+content = gradle.read_text()
+changed = False
 
-sdk_paths = [
-    os.environ.get("ANDROID_HOME"),
-    os.environ.get("ANDROID_SDK_ROOT"),
-    str(Path.home() / "Android/Sdk"),
+deps = [
+    'implementation "com.facebook.android:audience-network-sdk:6.20.0"',
+    'implementation "com.unity3d.ads:unity-ads:4.16.0"',
 ]
-sdk = next((Path(p) for p in sdk_paths if p and Path(p).exists()), None)
-say("Android SDK: " + (str(sdk) if sdk else "NOT FOUND"))
+for dep in deps:
+    if dep not in content:
+        marker = "dependencies {"
+        if marker not in content:
+            stop("Cannot locate dependencies block in app/build.gradle.")
+        content = content.replace(marker, marker + "\n    " + dep, 1)
+        changed = True
 
-if sdk:
-    os.environ["ANDROID_HOME"] = str(sdk)
-    os.environ["ANDROID_SDK_ROOT"] = str(sdk)
+if changed:
+    gradle.write_text(content)
+    print("Added missing SDK dependencies.")
 
-# 6. Sync existing Capacitor project
-if shutil.which("npx"):
-    sync_code = run(["npx", "cap", "sync", "android"])
-    say("Capacitor sync exit code: " + str(sync_code))
+# 6. Ensure custom Capacitor plugins are registered
+main = ROOT / "android/app/src/main/java/com/project100/app/MainActivity.java"
+main_text = main.read_text()
+if "registerPlugin(FacebookRewardedPlugin.class)" not in main_text:
+    print("Facebook plugin is not registered.")
+if "registerPlugin(UnityAdsPlugin.class)" not in main_text:
+    print("Unity plugin is not registered.")
+print("MainActivity checked.")
+
+# 7. Install JS dependencies
+if (ROOT / "package-lock.json").exists():
+    code = run(["npm", "ci"], timeout=600)
 else:
-    say("npx unavailable; skipping Capacitor sync.")
+    code = run(["npm", "install"], timeout=600)
+if code:
+    stop("npm dependencies failed; check the npm error above.")
 
-# 7. Try local APK build only if Java and SDK are present
-java_ok = shutil.which("java") is not None
-gradlew = ANDROID / "gradlew"
+# 8. Sync Capacitor
+code = run(["npx", "cap", "sync", "android"], timeout=600)
+if code:
+    stop("Capacitor sync failed; see error above.")
 
-if java_ok and sdk and gradlew.exists():
-    gradlew.chmod(gradlew.stat().st_mode | 0o111)
-    build_code = run(
-        ["./gradlew", "assembleDebug", "--stacktrace"],
-        cwd=ANDROID
-    )
-    apk = ANDROID / "app/build/outputs/apk/debug/app-debug.apk"
-    if build_code == 0 and apk.exists():
-        say("BUILD SUCCESS")
-        say("APK PATH: " + str(apk))
-    else:
-        say("LOCAL BUILD FAILED. See Gradle output above.")
-else:
-    say("LOCAL APK BUILD SKIPPED: Java or Android SDK is missing.")
-    say("A remote Android build runner, such as GitHub Actions, may be needed.")
+# 9. Make Gradle wrapper executable
+wrapper = ROOT / "android/gradlew"
+wrapper.chmod(wrapper.stat().st_mode | 0o111)
 
-# 8. Report results
-REPORT.write_text("\n".join(log), encoding="utf-8")
-say("REPORT SAVED: " + str(REPORT))
-say("=== AUTO CHECK FINISHED ===")
-say("This script does not invent ad IDs or claim unverified SDKs work.")
+# 10. Build APK
+code = run([
+    str(wrapper), "-p", "android",
+    "assembleDebug", "--stacktrace"
+], timeout=1800)
+
+if code:
+    print("\nBUILD FAILED.")
+    print("Automatic dependency/config fixes were attempted.")
+    print("The remaining Java SDK/API errors require matching the exact SDK interfaces.")
+    print("No custom Java source was overwritten automatically.")
+    sys.exit(code)
+
+apk = ROOT / "android/app/build/outputs/apk/debug/app-debug.apk"
+if not apk.is_file():
+    stop("Build ended without finding the APK.")
+
+print("\nSUCCESS: APK CREATED")
+print("File:", apk)
+print("Size:", apk.stat().st_size, "bytes")
+print("\nBuild complete.")

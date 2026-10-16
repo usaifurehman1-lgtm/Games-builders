@@ -43,6 +43,23 @@ jobs:
       - name: Sync Capacitor Android project
         run: npx cap sync android
 
+      - name: Fix legacy Start.io receiver manifest
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          p = Path("android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          old = '<receiver android:name="com.startapp.android.publish.common.metaData.BootCompleteListener">'
+          new = '<receiver android:name="com.startapp.android.publish.common.metaData.BootCompleteListener" android:exported="true">'
+          if old in s:
+              p.write_text(s.replace(old, new, 1))
+              print("Start.io receiver fixed.")
+          elif new in s:
+              print("Start.io receiver already fixed.")
+          else:
+              raise SystemExit("Start.io receiver line not found; build stopped.")
+          PYTHON
+
       - name: Build debug APK
         run: |
           chmod +x android/gradlew

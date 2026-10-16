@@ -1,0 +1,11 @@
+node_modules/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+.env
+.env.*
+*.keystore
+*.jks
+auto_fix_report.txt
+__pycache__/

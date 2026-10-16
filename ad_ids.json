@@ -1,0 +1,16 @@
+{
+  "admob": {
+    "app_id": "",
+    "rewarded_ad_unit_id": ""
+  },
+  "facebook": {
+    "placement_id": ""
+  },
+  "start_io": {
+    "app_id": ""
+  },
+  "unity": {
+    "game_id": "",
+    "rewarded_placement_id": ""
+  }
+}

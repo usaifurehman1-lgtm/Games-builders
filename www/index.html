@@ -1,0 +1,585 @@
+HTML
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Game & APK Builder Hub</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --accent-color: #3b82f6;
+      --success-color: #10b981;
+      --border-color: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.5);
+      border: 1px solid var(--border-color);
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+
+    .admin-title {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      background: var(--success-color);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 6px;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 11px;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    button,
+    .action-link {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      cursor: pointer;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+    }
+
+    button:hover,
+    .action-link:hover {
+      filter: brightness(1.1);
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .code-box {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-family: monospace;
+      border: 1px solid var(--border-color);
+      color: #34d399;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      max-height: 350px;
+      overflow-y: auto;
+      font-size: 12px;
+      min-height: 70px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 22px 0 12px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .merchant-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .merchant-btn {
+      padding: 11px 7px;
+      border-radius: 8px;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bg-jazz { background: #ef4444; }
+    .bg-easy { background: #22c55e; }
+    .bg-hbl { background: #1d4ed8; }
+    .bg-meezan { background: #047857; }
+    .bg-alfalah { background: #dc2626; }
+    .bg-abl { background: #2563eb; }
+    .bg-paytm { background: #0ea5e9; }
+    .bg-netlify { background: #0ea5e9; }
+    .bg-cloud { background: #8b5cf6; }
+    .bg-success { background: #059669; }
+
+    .panel {
+      background: #0f172a;
+      border: 1px dashed var(--accent-color);
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+
+    .help-text {
+      font-size: 12px;
+      line-height: 1.6;
+      color: #94a3b8;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 10px;
+      }
+
+      .container {
+        padding: 16px;
+      }
+
+      .merchant-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .button-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="admin-header">
+      <div class="admin-title">
+        <span>🛡️</span>
+        AI Game & APK Builder Hub
+      </div>
+      <div class="badge">Railway Backend</div>
+    </div>
+
+    <div class="section-title">
+      <span>🏛️</span> Merchant Portals & Digital Wallets
+    </div>
+
+    <div class="merchant-grid">
+      <a href="https://merchant.jazzcash.com.pk"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-jazz">🟠 JazzCash</a>
+
+      <a href="https://easypaisa.com.pk"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-easy">🟢 EasyPaisa</a>
+
+      <a href="https://www.hbl.com"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-hbl">🏦 HBL</a>
+
+      <a href="https://www.meezanbank.com"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-meezan">🕋 Meezan</a>
+
+      <a href="https://www.bankalfalah.com"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-alfalah">🔴 Alfalah</a>
+
+      <a href="https://www.abl.com"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-abl">🔵 Allied Bank</a>
+
+      <a href="https://paytm.com"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-paytm">💻 Paytm</a>
+    </div>
+
+    <div class="section-title">
+      <span>📘</span> Facebook & Meta Configuration
+    </div>
+
+    <div class="form-group">
+      <label for="userFacebookId">User Facebook App ID</label>
+      <input type="text" id="userFacebookId"
+             placeholder="Enter Facebook App ID">
+    </div>
+
+    <div class="form-group">
+      <label for="userMetaId">User Meta Placement ID</label>
+      <input type="text" id="userMetaId"
+             placeholder="Enter Meta Placement ID">
+    </div>
+
+    <div class="section-title">
+      <span>☁️</span> Hosting & Cloud Hub
+    </div>
+
+    <div class="merchant-grid">
+      <a href="https://app.netlify.com/drop"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-netlify">🚀 Netlify Drop</a>
+
+      <a href="https://www.pwabuilder.com"
+         target="_blank" rel="noopener"
+         class="merchant-btn bg-cloud">⚡ PWABuilder</a>
+    </div>
+
+    <div class="form-group">
+      <label for="walletDetails">
+        Wallet Details / Payment Account Label
+      </label>
+      <input type="text" id="walletDetails"
+             placeholder="Optional account label">
+      <p class="help-text">
+        यहाँ पासवर्ड, PIN, बैंक लॉगिन या गुप्त भुगतान जानकारी न डालें।
+      </p>
+    </div>
+
+    <button type="button" id="saveConfigBtn"
+            class="bg-success">
+      Save Configuration
+    </button>
+
+    <div class="section-title">
+      <span>🎮</span> AI Game Generator
+    </div>
+
+    <div class="form-group">
+      <label for="gameCommand">Enter Game Command / Prompt</label>
+      <textarea id="gameCommand" rows="4"
+        placeholder="Example: Create a playable HTML5 space shooter game with keyboard and touch controls."></textarea>
+    </div>
+
+    <button type="button" id="generateBtn">
+      Generate Game Through Railway
+    </button>
+
+    <div class="form-group" style="margin-top: 15px;">
+      <label>Generated Game Source Code</label>
+      <div id="generatedCodeDisplay" class="code-box">Ready. Enter a game prompt above.</div>
+    </div>
+
+    <div class="button-row">
+      <button type="button" id="downloadZipBtn">
+        Download Game ZIP
+      </button>
+
+      <a class="action-link bg-cloud"
+         href="https://www.pwabuilder.com"
+         target="_blank" rel="noopener">
+        Open PWABuilder
+      </a>
+    </div>
+
+    <div class="section-title">
+      <span>🔒</span> Rewarded Ads & APK Builder
+    </div>
+
+    <div class="panel">
+      <p style="margin-top: 0; color: #facc15; font-weight: 600;">
+        Rewarded Ads / APK Build
+      </p>
+
+      <p class="help-text">
+        वास्तविक rewarded ads के लिए Android विज्ञापन SDK और उसके
+        reward callback की आवश्यकता है। विज्ञापन पूरा होने का नकली
+        timer इस्तेमाल नहीं किया जाता। APK बनाने के लिए connected
+        build workflow भी आवश्यक है।
+      </p>
+
+      <button type="button" id="buildInfoBtn">
+        Check APK Build Requirements
+      </button>
+
+      <div id="buildStatus" class="help-text" style="margin-top: 12px;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    "use strict";
+
+    // Railway backend URL
+    const BACKEND_URL =
+      "https://games-builder-production-73a0.up.railway.app";
+
+    const HIDDEN_MASTER_UNITS = {
+      ADMOB_APP_ID: "ca-app-pub-2687803208650412~8824346889",
+      ADMOB_AD_UNIT_ID_1: "ca-app-pub-2687803208650412/3120504774",
+      ADMOB_AD_UNIT_ID_2: "6081847",
+      START_IO_APP_ID: "209634202",
+      UNITY_GAME_ID: "800386783",
+      UNITY_PLACEMENT_ID: "18968513796763",
+      META_APP_ID_ADMIN: "2457356",
+      ADSTERRA_ZONE_ID: "6096272"
+    };
+
+    let latestGeneratedCode = "";
+
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(message) {
+      $("buildStatus").textContent = message;
+    }
+
+    function loadConfiguration() {
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem("gameBuilderConfiguration") || "{}"
+        );
+
+        $("userFacebookId").value = saved.facebookId || "";
+        $("userMetaId").value = saved.metaId || "";
+        $("walletDetails").value = saved.walletLabel || "";
+      } catch (error) {
+        console.warn("Could not load saved configuration:", error);
+      }
+    }
+
+    function saveConfiguration() {
+      const config = {
+        facebookId: $("userFacebookId").value.trim(),
+        metaId: $("userMetaId").value.trim(),
+        walletLabel: $("walletDetails").value.trim()
+      };
+
+      try {
+        localStorage.setItem(
+          "gameBuilderConfiguration",
+          JSON.stringify(config)
+        );
+
+        alert("Configuration saved on this device.");
+      } catch (error) {
+        alert("Could not save configuration: " + error.message);
+      }
+    }
+
+    async function generateGameProcess() {
+      const command = $("gameCommand").value.trim();
+      const display = $("generatedCodeDisplay");
+      const button = $("generateBtn");
+
+      if (!command) {
+        alert("Please enter a game prompt first.");
+        return;
+      }
+
+      button.disabled = true;
+      display.textContent = "Connecting to Railway and generating game...";
+      latestGeneratedCode = "";
+
+      try {
+        const response = await fetch(
+          `${BACKEND_URL}/api/generate`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              prompt: command
+            })
+          }
+        );
+
+        const raw = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error(
+            `Railway returned a non-JSON response (HTTP ${response.status}).`
+          );
+        }
+
+        if (!response.ok) {
+          const detail =
+            data.detail || data.error || data.message ||
+            `HTTP ${response.status}`;
+
+          throw new Error(
+            typeof detail === "string"
+              ? detail
+              : JSON.stringify(detail)
+          );
+        }
+
+        const candidates = [
+          data.html,
+          data.code,
+          data.game_code,
+          data.generated_html,
+          data.generated_code,
+          data.content,
+          data.result
+        ];
+
+        const gameCode = candidates.find(
+          value => typeof value === "string" && value.trim()
+        );
+
+        if (!gameCode) {
+          throw new Error(
+            "The backend responded, but its response does not contain " +
+            "a recognized HTML/code field. Check the /api/generate response."
+          );
+        }
+
+        latestGeneratedCode = gameCode.trim();
+        display.textContent = latestGeneratedCode;
+
+        alert("Game code received from Railway.");
+      } catch (error) {
+        display.textContent = "Generation failed: " + error.message;
+
+        alert(
+          "Could not generate the game.\n\n" +
+          error.message +
+          "\n\nCheck that Railway is running and that /api/generate " +
+          "accepts the prompt field."
+        );
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function downloadZipAndOpenBuilder(gameCode) {
+      if (typeof JSZip === "undefined") {
+        throw new Error(
+          "JSZip did not load. Check your internet connection and reload."
+        );
+      }
+
+      const zip = new JSZip();
+      zip.file("index.html", gameCode);
+
+      const blob = await zip.generateAsync({
+        type: "blob"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "game_app_package.zip";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    async function downloadGeneratedGame() {
+      const displayText = $("generatedCodeDisplay").textContent.trim();
+      const gameCode = latestGeneratedCode || displayText;
+
+      if (
+        !gameCode ||
+        gameCode.startsWith("Ready.") ||
+        gameCode.startsWith("Connecting") ||
+        gameCode.startsWith("Generation failed")
+      ) {
+        alert("Generate a game successfully before downloading.");
+        return;
+      }
+
+      try {
+        await downloadZipAndOpenBuilder(gameCode);
+      } catch (error) {
+        alert("ZIP download failed: " + error.message);
+      }
+    }
+
+    function checkBuildRequirements() {
+      setStatus(
+        "Backend: " + BACKEND_URL +
+        "\n\nA ZIP contains the generated HTML game; it is not an APK. " +
+        "For an actual APK, configure the backend's build endpoint and " +
+        "a working GitHub Actions Android build workflow."
+      );
+    }
+
+    $("saveConfigBtn").addEventListener("click", saveConfiguration);
+    $("generateBtn").addEventListener("click", generateGameProcess);
+    $("downloadZipBtn").addEventListener("click", downloadGeneratedGame);
+    $("buildInfoBtn").addEventListener("click", checkBuildRequirements);
+
+    document.addEventListener("DOMContentLoaded", loadConfiguration);
+    loadConfiguration();
+  </script>
+</body>
+</html>

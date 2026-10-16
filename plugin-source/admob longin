@@ -1,0 +1,28 @@
+kprint("Hello World")
+
+
+
+
+
+import { AdMob } from "@capacitor-community/admob";
+
+export async function showAdMobRewardedVideo() {
+  try {
+    await AdMob.prepareRewardVideoAd({
+      adId: "YOUR_REWARDED_AD_UNIT_ID",
+      isTesting: true
+    });
+
+    await AdMob.showRewardVideoAd();
+
+    return { success: true };
+  } catch (error) {
+    console.error("AdMob rewarded video error:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+
+
+
+

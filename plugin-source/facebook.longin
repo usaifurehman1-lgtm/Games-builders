@@ -1,0 +1,104 @@
+
+package com.mygame.app;
+
+import android.app.Activity;
+
+import com.facebook.ads.Ad;
+import com.facebook.ads.AdError;
+import com.facebook.ads.RewardedVideoAd;
+import com.facebook.ads.RewardedVideoAdListener;
+
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
+@CapacitorPlugin(name = "FacebookRewarded")
+public class FacebookRewardedPlugin extends Plugin {
+
+    private RewardedVideoAd rewardedVideoAd;
+    private PluginCall pendingCall;
+    private PluginCall showCall;
+
+    @PluginMethod
+    public void initialize(PluginCall call) {
+        String placementId = call.getString("placementId", "");
+
+        if (placementId == null || placementId.isEmpty()) {
+            call.reject("Facebook Placement ID is required");
+            return;
+        }
+
+        pendingCall = call;
+        Activity activity = getActivity();
+
+        rewardedVideoAd = new RewardedVideoAd(activity, placementId);
+
+        rewardedVideoAd.setAdListener(new RewardedVideoAdListener() {
+            @Override
+            public void onAdLoaded(Ad ad) {
+                if (pendingCall != null) {
+                    pendingCall.resolve();
+                    pendingCall = null;
+                }
+            }
+
+            @Override
+            public void onError(Ad ad, AdError error) {
+                if (pendingCall != null) {
+                    pendingCall.reject(error.getErrorMessage());
+                    pendingCall = null;
+                }
+
+                if (showCall != null) {
+                    showCall.reject(error.getErrorMessage());
+                    showCall = null;
+                }
+            }
+
+            @Override
+            public void onAdClicked(Ad ad) {}
+
+            @Override
+            public void onLoggingImpression(Ad ad) {}
+
+            @Override
+            public void onRewardedVideoCompleted() {
+                if (showCall != null) {
+                    showCall.resolve();
+                    showCall = null;
+                }
+            }
+
+            @Override
+            public void onRewardedVideoClosed() {
+                if (showCall != null) {
+                    showCall.reject(
+                        "Rewarded video closed before completion"
+                    );
+                    showCall = null;
+                }
+            }
+        });
+
+        rewardedVideoAd.loadAd();
+    }
+
+    @PluginMethod
+    public void showRewarded(PluginCall call) {
+        if (rewardedVideoAd == null ||
+            !rewardedVideoAd.isAdLoaded()) {
+            call.reject("Facebook rewarded video is not loaded");
+            return;
+        }
+
+        showCall = call;
+
+        boolean shown = rewardedVideoAd.show();
+
+        if (!shown) {
+            showCall = null;
+            call.reject("Facebook rewarded video failed to show");
+        }
+    }
+}

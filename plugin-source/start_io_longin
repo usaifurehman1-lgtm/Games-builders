@@ -1,0 +1,42 @@
+
+public void showRewardVideo(CallbackContext callbackContext) {
+    final StartAppAd startAppAd =
+            new StartAppAd(cordova.getActivity());
+
+    startAppAd.setVideoListener(new VideoListener() {
+        @Override
+        public void onVideoCompleted() {
+            // Grant user with the reward
+            cWebView.loadUrl(
+                "javascript:cordova.fireDocumentEvent('startappads.reward_video.reward');"
+            );
+
+            callbackContext.success("Rewarded video completed");
+        }
+    });
+
+    startAppAd.loadAd(
+        AdMode.REWARDED_VIDEO,
+        new AdEventListener() {
+            @Override
+            public void onReceiveAd(Ad ad) {
+                cWebView.loadUrl(
+                    "javascript:cordova.fireDocumentEvent('startappads.reward_video.load');"
+                );
+
+                startAppAd.showAd();
+            }
+
+            @Override
+            public void onFailedToReceiveAd(Ad ad) {
+                cWebView.loadUrl(
+                    "javascript:cordova.fireDocumentEvent('startappads.reward_video.load_fail');"
+                );
+
+                callbackContext.error("Rewarded video failed to load");
+            }
+        }
+    );
+}
+
+

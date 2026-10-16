@@ -34,7 +34,7 @@ public class FacebookRewardedPlugin extends Plugin {
 
         rewardedVideoAd = new RewardedVideoAd(activity, placementId);
 
-        rewardedVideoAd.setAdListener(new RewardedVideoAdListener() {
+        RewardedVideoAdListener listener = new RewardedVideoAdListener() {
             @Override
             public void onAdLoaded(Ad ad) {
                 if (pendingCall != null) {
@@ -79,9 +79,13 @@ public class FacebookRewardedPlugin extends Plugin {
                     showCall = null;
                 }
             }
-        });
+        };
 
-        rewardedVideoAd.loadAd();
+        rewardedVideoAd.loadAd(
+            rewardedVideoAd.buildLoadAdConfig()
+                .withAdListener(listener)
+                .build()
+        );
     }
 
     @PluginMethod

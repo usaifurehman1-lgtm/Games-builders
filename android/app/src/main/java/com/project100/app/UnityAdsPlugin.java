@@ -5,6 +5,8 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.unity3d.ads.UnityAds;
+import com.unity3d.ads.IUnityAdsInitializationListener;
+import com.unity3d.ads.IUnityAdsShowListener;
 
 @CapacitorPlugin(name = "UnityAds")
 public class UnityAdsPlugin extends Plugin {
@@ -22,7 +24,7 @@ public class UnityAdsPlugin extends Plugin {
             getActivity(),
             gameId,
             false,
-            new UnityAds.IUnityAdsInitializationListener() {
+            new IUnityAdsInitializationListener() {
                 @Override
                 public void onInitializationComplete() {
                     call.resolve();
@@ -51,7 +53,7 @@ public class UnityAdsPlugin extends Plugin {
         UnityAds.show(
             getActivity(),
             placementId,
-            new UnityAds.IUnityAdsShowListener() {
+            new IUnityAdsShowListener() {
                 @Override
                 public void onUnityAdsShowFailure(
                     String placementId,
